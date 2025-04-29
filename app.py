@@ -1,61 +1,64 @@
 import streamlit as st
 import pandas as pd
 import requests
-from PIL import Image  # ← 추가
+from PIL import Image
 
 def fetch_url_key(std_code: str) -> str:
     url = f"https://www.astm.org/Standards/{std_code}.htm"
     resp = requests.get(url, timeout=5)
     resp.raise_for_status()
-    final_url = resp.url
-    return final_url.rstrip("/").split("/")[-1].split(".")[0]
+    return resp.url.rstrip("/").split("/")[-1].split(".")[0]
 
-
-# ─── 0) 상단에 이미지 삽입 ─────────────────────────────────────────────
-# 같은 디렉터리에 있는 header.jpg 파일을 불러옵니다.
+# 0) 상단 이미지
 img = Image.open("header.jpg")
-st.image(img, use_container_width=True)            # 화면 폭에 맞춰 표시
-# st.image(img, caption="My Header", use_column_width=True)  # 캡션 추가 옵션
+st.image(img, use_container_width=True)
 
-# ─── 1) 타이틀 ───────────────────────────────────────────────────────
 st.title("ASTM URL Key 기준 Revision 확인")
-
 st.write("""
-- 업로드할 Excel 파일의 첫 번째 시트에
+- 업로드할 Excel 파일의 첫 번째 시트에  
   `Standard Name` 과 `Current Revision URL Key`  
   두 개의 컬럼(header)이 반드시 있어야 합니다.
 """)
 
-# 2) Excel에서 데이터 불러오기
+# 1) 엑셀 업로드
 uploaded_file = st.file_uploader("Upload your .xlsx file", type=["xlsx"])
-if uploaded_file is None:
+if not uploaded_file:
     st.warning("엑셀 파일을 업로드해주세요.")
     st.stop()
 
-# pandas로 읽어들여 바로 df 로 사용
 df = pd.read_excel(uploaded_file)
 st.subheader("업로드된 데이터")
 st.dataframe(df, use_container_width=True)
 
 if st.button("Run"):
-    latest_keys     = []
-    revision_flags  = []
+    latest_keys    = []
+    revision_flags = []
 
     for name, current_key in zip(df["Standard Name"], df["Current Revision URL Key"]):
-        # e.g. name="ASTM E45" → code="E45"
-        code = name.split()[1]
-
+        code = name.split()[1]  # e.g. "ASTM E45" → "E45"
         try:
             latest_key = fetch_url_key(code)
-        except Exception as e:
-            latest_key = f"Error"
+        except:
+            latest_key = "Error"
         latest_keys.append(latest_key)
 
+        # 같으면 "개정No", 다르면 "개정Yes"
         flag = "개정No" if latest_key.lower() == current_key.lower() else "개정Yes"
         revision_flags.append(flag)
 
     df["Latest Revision URL Key"] = latest_keys
     df["Revision YN"]              = revision_flags
 
+    # 2) 스타일 함수 정의
+    def highlight_revision(cell):
+        return "background-color: red; color: white" if cell == "개정Yes" else ""
+
+    # 3) Styler 적용
+    styled = (
+        df.style
+          .applymap(highlight_revision, subset=["Revision YN"])
+          .set_properties(**{"text-align": "center"})  # 전체 가운데 정렬 예시
+    )
+
     st.subheader("비교 결과")
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(styled, use_container_width=True)
