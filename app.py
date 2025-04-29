@@ -1,9 +1,7 @@
-# requirements:
-# pip install streamlit pandas requests openpyxl
-
 import streamlit as st
 import pandas as pd
 import requests
+from PIL import Image  # ← 추가
 
 def fetch_url_key(std_code: str) -> str:
     url = f"https://www.astm.org/Standards/{std_code}.htm"
@@ -12,6 +10,14 @@ def fetch_url_key(std_code: str) -> str:
     final_url = resp.url
     return final_url.rstrip("/").split("/")[-1].split(".")[0]
 
+
+# ─── 0) 상단에 이미지 삽입 ─────────────────────────────────────────────
+# 같은 디렉터리에 있는 header.jpg 파일을 불러옵니다.
+img = Image.open("header.jpg")
+st.image(img, use_container_width=True)            # 화면 폭에 맞춰 표시
+# st.image(img, caption="My Header", use_column_width=True)  # 캡션 추가 옵션
+
+# ─── 1) 타이틀 ───────────────────────────────────────────────────────
 st.title("ASTM URL Key 기준 Revision 확인")
 
 st.write("""
@@ -20,7 +26,7 @@ st.write("""
   두 개의 컬럼(header)이 반드시 있어야 합니다.
 """)
 
-# 1) Excel에서 데이터 불러오기
+# 2) Excel에서 데이터 불러오기
 uploaded_file = st.file_uploader("Upload your .xlsx file", type=["xlsx"])
 if uploaded_file is None:
     st.warning("엑셀 파일을 업로드해주세요.")
