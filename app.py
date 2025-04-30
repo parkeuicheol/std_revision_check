@@ -6,44 +6,64 @@ import pandas as pd
 import requests
 from PIL import Image
 
+# ─── 0) 설정(구글 스프레드시트 CSV URL) ────────────────────
+# 공유 설정을 “링크 있는 모든 사용자에게 보기 권한”으로 해두세요.
+SPREADSHEET_CSV_URL = (
+    "https://docs.google.com/spreadsheets/d/"
+    "124a7g9IsLLZTVGfsHez--paBj8EU9ZWT"
+    "/export?format=csv"
+)
+
+# 상단에 원본 Sheet URL 상수로 정의
+SPREADSHEET_URL = (
+    "https://docs.google.com/spreadsheets/d/"
+    "124a7g9IsLLZTVGfsHez--paBj8EU9ZWT"
+    "/edit?usp=sharing"
+)
+
 def fetch_url_key(std_code: str) -> str:
     url = f"https://www.astm.org/Standards/{std_code}.htm"
     resp = requests.get(url, timeout=5)
     resp.raise_for_status()
     return resp.url.rstrip("/").split("/")[-1].split(".")[0]
 
-# ─── 0) 상단 이미지 ─────────────────────────────────
+# ─── 1) 상단 이미지 ─────────────────────────────────────────
 img = Image.open("header.jpg")
 st.image(img, use_container_width=True)
 
 st.title("ASTM URL Key 기준 Revision 확인")
 st.write("""
-- 업로드할 Excel 파일의 첫 번째 시트에  
+- 미리 지정한 Google Spreadsheet에서  
   `Standard Name` 과 `Current Revision URL Key`  
-  두 개의 컬럼(header)이 반드시 있어야 합니다.
+  두 개의 컬럼(header)을 자동으로 불러와 비교합니다.
 """)
 
-# ─── 1) 엑셀 업로드 ─────────────────────────────────
-uploaded_file = st.file_uploader("Upload your .xlsx file", type=["xlsx"])
-if not uploaded_file:
-    st.warning("엑셀 파일을 업로드해주세요.")
+# 클릭하면 원본 시트로 이동하는 링크
+st.markdown(f"- 📋 **원본 스프레드시트 열기:** [여기를 클릭하세요]({SPREADSHEET_URL})")
+
+# ─── 2) 구글 시트에서 데이터 로드 ────────────────────────────
+try:
+    df = pd.read_csv(SPREADSHEET_CSV_URL)
+except Exception as e:
+    st.error(f"스프레드시트에서 데이터를 가져오는 데 실패했습니다:\n{e}")
     st.stop()
 
-df = pd.read_excel(uploaded_file)
-st.subheader("업로드된 데이터")
+st.subheader("불러온 데이터")
 st.dataframe(df, use_container_width=True)
 
-# ─── 2) Run 버튼 & Progress Bar ────────────────────
+# ─── 3) Run 버튼 & Progress Bar ────────────────────────────
 if st.button("Run"):
     total = len(df)
-    progress = st.progress(0)            # 0%부터 시작
-    status_text = st.empty()             # 처리 중 상태 메시지를 찍을 곳
+    progress = st.progress(0)
+    status_text = st.empty()
 
     latest_keys    = []
     revision_flags = []
 
-    for i, (name, current_key) in enumerate(zip(df["Standard Name"], df["Current Revision URL Key"])):
-        # 진행 상태 업데이트
+    for i, (name, current_key) in enumerate(zip(
+        df["Standard Name"],
+        df["Current Revision URL Key"]
+    )):
         status_text.text(f"({i+1}/{total}) 처리 중: {name}")
         try:
             code = name.split()[1]      # "ASTM E45" → "E45"
@@ -52,13 +72,14 @@ if st.button("Run"):
             latest_key = "Error"
 
         latest_keys.append(latest_key)
-        flag = "개정No" if latest_key.lower() == current_key.lower() else "개정Yes"
+        flag = (
+            "개정No"
+            if latest_key.lower() == current_key.lower()
+            else "개정Yes"
+        )
         revision_flags.append(flag)
-
-        # progress bar 업데이트
         progress.progress((i+1) / total)
 
-    # 완료 후 메시지
     status_text.text("완료되었습니다! 🎉")
 
     # 결과 DataFrame 구성
