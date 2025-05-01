@@ -48,7 +48,7 @@ except Exception as e:
     st.error(f"스프레드시트에서 데이터를 가져오는 데 실패했습니다:\n{e}")
     st.stop()
 
-st.subheader("### 현재 보유한 규격별 Revision정보")
+st.subheader("♣현재 보유한 규격별 Revision정보♣")
 st.dataframe(df, use_container_width=True)
 
 # ─── 3) Run 버튼 & Progress Bar ────────────────────────────
