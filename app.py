@@ -37,7 +37,7 @@ def fetch_url_key(std_code: str) -> str:
 img = Image.open("header.jpg")
 st.image(img, use_container_width=True)
 
-st.title("ASTM URL Key 기준 Revision 확인")
+st.title("🔄 ASTM Standards Revision Check")
 st.write("""
 - 미리 지정한 Google Spreadsheet에서  
   `Standard Name` 과 `Current Revision URL Key`  
