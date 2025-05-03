@@ -38,11 +38,18 @@ img = Image.open("header.jpg")
 st.image(img, use_container_width=True)
 
 st.title("🔄 ASTM Standards Revision Check")
-st.write("""
-- 미리 지정한 Google Spreadsheet에서  
-  `Standard Name` 과 `Current Revision URL Key`  
-  두 개의 컬럼(header)을 자동으로 불러와 비교합니다.
-""")
+st.markdown(
+    """
+    **사용법**  
+    1. 아래 링크로 구글 스프레드시트 원본(현보유 규격별 Revision정보)을 확인할 수 있습니다.
+    2. 각 표준별 최신 Revision정보를 ASTM 웹사이트에서 가져와 규격별 Revision여부를 확인하고 결과를 표로 보여드립니다.
+    """
+    )
+# st.write("""
+# - 미리 지정한 Google Spreadsheet에서  
+#   `Standard Name` 과 `Current Revision URL Key`  
+#   두 개의 컬럼(header)을 자동으로 불러와 비교합니다.
+# """)
 
 # 클릭하면 원본 시트로 이동하는 링크
 st.markdown(f"- 📋 **원본 스프레드시트 열기:** [여기를 클릭하세요]({SPREADSHEET_URL})")
