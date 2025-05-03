@@ -6,6 +6,12 @@ import pandas as pd
 import requests
 from PIL import Image
 
+# Streamlit 페이지 설정: 반드시 다른 st.* 호출보다 먼저!
+st.set_page_config(
+    page_title="ASTM Standards Revision Comparator",
+    layout="wide"
+)
+
 # ─── 0) 설정(구글 스프레드시트 CSV URL) ────────────────────
 # 공유 설정을 “링크 있는 모든 사용자에게 보기 권한”으로 해두세요.
 SPREADSHEET_CSV_URL = (
